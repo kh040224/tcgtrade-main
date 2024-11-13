@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const {
   getProducts,
   addProduct,
@@ -8,17 +7,12 @@ const {
   getSoldStatus
 } = require('./database');
 
-var corsOptions = {
-  origin: 'http://tcgtrade.net',
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-}
 
 const app = express();
-// app.use(cors());
 app.use(express.json());
 
 // 상품 목록 조회
-app.get('/api/products', cors(corsOptions), async (req, res) => {
+app.get('/api/products', async (req, res) => {
   try {
     const products = await getProducts();
     res.json(products);
@@ -28,7 +22,7 @@ app.get('/api/products', cors(corsOptions), async (req, res) => {
 });
 
 // 새 상품 추가
-app.post('/api/products', cors(corsOptions), async (req, res) => {
+app.post('/api/products', async (req, res) => {
   const { title, items, password } = req.body;
   try {
     const newProduct = await addProduct(title, items, password);
@@ -39,7 +33,7 @@ app.post('/api/products', cors(corsOptions), async (req, res) => {
 });
 
 // 상품 삭제
-app.delete('/api/products/:id', cors(corsOptions), async (req, res) => {
+app.delete('/api/products/:id', async (req, res) => {
   const { id } = req.params;
   const { password } = req.body;
   try {
@@ -57,7 +51,7 @@ app.delete('/api/products/:id', cors(corsOptions), async (req, res) => {
 });
 
 // 판매 상태 변경
-app.post('/api/products/:id/sold', cors(corsOptions), async (req, res) => {
+app.post('/api/products/:id/sold', async (req, res) => {
   const { id } = req.params;
   const { password, itemIndex } = req.body;
   try {
@@ -75,7 +69,7 @@ app.post('/api/products/:id/sold', cors(corsOptions), async (req, res) => {
 });
 
 // 판매 상태 조회
-app.get('/api/products/sold-status', cors(corsOptions), async (req, res) => {
+app.get('/api/products/sold-status', async (req, res) => {
   try {
     const soldStatus = await getSoldStatus();
     res.json(soldStatus);
