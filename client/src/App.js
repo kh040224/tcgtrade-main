@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
-const SERVER_URL = "http://localhost:5000"
+const SERVER_URL = "http://server.tcgtrade.net"
 
 export default function App() {
   const [products, setProducts] = useState([])
