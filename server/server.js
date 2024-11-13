@@ -9,12 +9,12 @@ const {
 } = require('./database');
 
 var corsOptions = {
-  origin: 'http://tcgtrade.net/',
+  origin: 'http://tcgtrade.net',
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 }
 
 const app = express();
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 
 // 상품 목록 조회
