@@ -1,3 +1,4 @@
+const cors = require('cors');
 const express = require('express');
 const {
   getProducts,
@@ -10,6 +11,7 @@ const {
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 // 상품 목록 조회
 app.get('/api/products', async (req, res) => {
