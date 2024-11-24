@@ -38,13 +38,12 @@ export default function Component() {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'same-origin', // 또는 'include' 사용 가능
+        credentials: 'include', // 또는 'include' 사용 가능
       });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
       const data = await response.json();
       setProducts(data);
     } catch (error) {
@@ -60,7 +59,7 @@ export default function Component() {
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'same-origin', // 또는 'include' 사용 가능
+        credentials: 'include', // 또는 'include' 사용 가능
       });
       
       if (!response.ok) {
