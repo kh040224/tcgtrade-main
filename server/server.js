@@ -12,7 +12,10 @@ const {
   editProduct // Add this new function import
 } = require('./database');
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000', // 클라이언트의 URL
+  credentials: true, // 인증 정보를 허용
+}));
 app.use(express.json());
 
 // 상품 목록 조회

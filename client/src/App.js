@@ -30,31 +30,49 @@ export default function Component() {
 
   const fetchProducts = async () => {
     try {
-      setFetchError(null)
-      const response = await fetch(`${SERVER_URL}/api/products`)
+      setFetchError(null);
+      
+      // fetch 요청에 credentials 추가
+      const response = await fetch(`${SERVER_URL}/api/products`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin', // 또는 'include' 사용 가능
+      });
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json()
-      setProducts(data)
+  
+      const data = await response.json();
+      setProducts(data);
     } catch (error) {
-      console.error('Failed to fetch products:', error)
-      setFetchError('상품 목록을 불러오는데 실패했습니다.')
+      console.error('Failed to fetch products:', error);
+      setFetchError('상품 목록을 불러오는데 실패했습니다.');
     }
-  }
+  };
 
   const fetchSoldStatus = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/products/sold-status`)
+      const response = await fetch(`${SERVER_URL}/api/products/sold-status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin', // 또는 'include' 사용 가능
+      });
+      
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const data = await response.json()
-      setSoldItems(data)
+  
+      const data = await response.json();
+      setSoldItems(data);
     } catch (error) {
-      console.error('Failed to fetch sold status:', error)
+      console.error('Failed to fetch sold status:', error);
     }
-  }
+  };
 
   useEffect(() => {
     fetchProducts()
