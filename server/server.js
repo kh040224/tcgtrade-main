@@ -1,7 +1,3 @@
-res.setHeader('Access-Control-Allow-Origin', 'https://tcgtrade.net');
-res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
 const cors = require('cors');
 const express = require('express');
 const {
