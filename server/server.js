@@ -13,7 +13,8 @@ const {
 } = require('./database');
 
 app.use(cors({
-  origin: 'https://tcgtrade.net', // 클라이언트의 URL
+  origin: 'https://tcgtrade.net',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // 클라이언트의 URL
   credentials: true, // 인증 정보를 허용
 }));
 app.use(express.json());
