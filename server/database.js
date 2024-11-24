@@ -109,10 +109,31 @@ function getSoldStatus() {
   });
 }
 
+// 상품 수정 (새로 추가된 함수)
+function editProduct(id, title, items, password) {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT password FROM products WHERE id = ?', [id], (err, row) => {
+      if (err) reject(err);
+      else if (!row) reject(new Error('상품을 찾을 수 없습니다.'));
+      else if (row.password !== password) reject(new Error('비밀번호가 일치하지 않습니다.'));
+      else {
+        db.run('UPDATE products SET title = ?, items = ? WHERE id = ?',
+          [title, items, id],
+          function(err) {
+            if (err) reject(err);
+            else resolve({ id, title, items, message: '상품이 수정되었습니다.' });
+          }
+        );
+      }
+    });
+  });
+}
+
 module.exports = {
   getProducts,
   addProduct,
   deleteProduct,
   changeSoldStatus,
-  getSoldStatus
+  getSoldStatus,
+  editProduct  // 새로 추가된 함수를 모듈 내보내기에 포함
 };

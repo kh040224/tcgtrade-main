@@ -39,9 +39,9 @@ class ProductModel {
         if (err) {
           reject(err);
         } else if (!row) {
-          reject(new Error('Product not found'));
+          reject(new Error('상품을 찾을 수 없습니다'));
         } else if (row.password !== password) {
-          reject(new Error('Incorrect password'));
+          reject(new Error('비밀번호가 일치하지 않습니다'));
         } else {
           db.run("DELETE FROM products WHERE id = ?", [id], (err) => {
             if (err) {
@@ -50,6 +50,36 @@ class ProductModel {
               resolve({ success: true });
             }
           });
+        }
+      });
+    });
+  }
+
+  static updateProduct(id, productData) {
+    return new Promise((resolve, reject) => {
+      const { title, items, password } = productData;
+      db.get("SELECT password FROM products WHERE id = ?", [id], (err, row) => {
+        if (err) {
+          reject(err);
+        } else if (!row) {
+          reject(new Error('상품을 찾을 수 없습니다'));
+        } else if (row.password !== password) {
+          reject(new Error('비밀번호가 일치하지 않습니다'));
+        } else {
+          db.run("UPDATE products SET title = ?, items = ? WHERE id = ?",
+            [title, items, id],
+            (err) => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve({
+                  id,
+                  title,
+                  items
+                });
+              }
+            }
+          );
         }
       });
     });

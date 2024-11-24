@@ -1,43 +1,54 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Plus, ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
-const SERVER_URL = "http://server.tcgtrade.net"
+import { Plus, ChevronLeft, ChevronRight, X, Trash2, Edit } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 
-export default function App() {
+const SERVER_URL = "https://localhost:5000"
+
+export default function Component() {
   const [products, setProducts] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [showItemsPopup, setShowItemsPopup] = useState(null)
   const [showDeletePopup, setShowDeletePopup] = useState(null)
+  const [showEditPopup, setShowEditPopup] = useState(null)
   const [newTitle, setNewTitle] = useState('')
   const [newItems, setNewItems] = useState([''])
   const [newPassword, setNewPassword] = useState('')
   const [deletePassword, setDeletePassword] = useState('')
+  const [editPassword, setEditPassword] = useState('')
   const [deleteError, setDeleteError] = useState('')
+  const [editError, setEditError] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
-  const productsPerPage = 9
-  const formRef = useRef(null)
   const [soldItems, setSoldItems] = useState({})
   const [showSoldPopup, setShowSoldPopup] = useState(null)
-
-  useEffect(() => {
-    fetchProducts()
-    fetchSoldStatus()
-  }, [])
+  const [showQR, setShowQR] = useState(false)
+  const [fetchError, setFetchError] = useState(null)
+  
+  const productsPerPage = 9
+  const formRef = useRef(null)
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(SERVER_URL+'/api/products')
+      setFetchError(null)
+      const response = await fetch(`${SERVER_URL}/api/products`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       const data = await response.json()
       setProducts(data)
     } catch (error) {
       console.error('Failed to fetch products:', error)
+      setFetchError('상품 목록을 불러오는데 실패했습니다.')
     }
   }
 
   const fetchSoldStatus = async () => {
     try {
       const response = await fetch(`${SERVER_URL}/api/products/sold-status`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       const data = await response.json()
       setSoldItems(data)
     } catch (error) {
@@ -45,11 +56,16 @@ export default function App() {
     }
   }
 
+  useEffect(() => {
+    fetchProducts()
+    fetchSoldStatus()
+  }, [])
+
   const handleAddProduct = async (e) => {
     e.preventDefault()
     if (newTitle.trim() && newItems[0].trim() && newPassword.trim()) {
       try {
-        const response = await fetch(SERVER_URL+'/api/products', {
+        const response = await fetch(`${SERVER_URL}/api/products`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -58,6 +74,9 @@ export default function App() {
             password: newPassword
           })
         })
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
         const data = await response.json()
         setProducts([...products, data])
         setNewTitle('')
@@ -88,8 +107,8 @@ export default function App() {
   }
 
   const handleDeleteAttempt = (id) => {
-    setShowDeletePopup(id);
-    setDeletePassword('');
+    setShowDeletePopup(id)
+    setDeletePassword('')
     setDeleteError('')
   }
 
@@ -100,18 +119,17 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: deletePassword })
       })
-      if (response.ok) {
-        setProducts(products.filter(p => p.id !== showDeletePopup))
-        setShowDeletePopup(null)
-      } else {
+      if (!response.ok) {
         const data = await response.json()
-        setDeleteError(data.error)
+        throw new Error(data.error || `HTTP error! status: ${response.status}`)
       }
+      setProducts(products.filter(p => p.id !== showDeletePopup))
+      setShowDeletePopup(null)
     } catch (error) {
       console.error('Failed to delete product:', error)
-      setDeleteError('삭제 중 오류가 발생했습니다.')
+      setDeleteError(error.message || '삭제 중 오류가 발생했습니다.')
     }
-    setDeletePassword('');
+    setDeletePassword('')
   }
 
   const handleSoldStatusChange = async (productId, itemIndex) => {
@@ -121,24 +139,58 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: deletePassword, itemIndex })
       })
-      if (response.ok) {
-        setSoldItems(prev => ({
-          ...prev,
-          [productId]: {
-            ...(prev[productId] || {}),
-            [itemIndex]: !(prev[productId] && prev[productId][itemIndex])
-          }
-        }))
-        setShowSoldPopup(null)
-      } else {
+      if (!response.ok) {
         const data = await response.json()
-        setDeleteError(data.error || '본인의 상품만 수정하실 수 있습니다.')
+        throw new Error(data.error || `HTTP error! status: ${response.status}`)
       }
+      setSoldItems(prev => ({
+        ...prev,
+        [productId]: {
+          ...(prev[productId] || {}),
+          [itemIndex]: !(prev[productId] && prev[productId][itemIndex])
+        }
+      }))
+      setShowSoldPopup(null)
     } catch (error) {
       console.error('Failed to update sold status:', error)
-      setDeleteError('상태 변경 중 오류가 발생했습니다.')
+      setDeleteError(error.message || '상태 변경 중 오류가 발생했습니다.')
     }
-    setDeletePassword('');
+    setDeletePassword('')
+  }
+
+  const handleEditAttempt = (product) => {
+    setShowEditPopup(product)
+    setNewTitle(product.title)
+    setNewItems(product.items.split('\n'))
+    setEditPassword('')
+    setEditError('')
+  }
+
+  const handleEditConfirm = async () => {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/products/${showEditPopup.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newTitle,
+          items: newItems.filter(item => item.trim() !== '').join('\n'),
+          password: editPassword
+        })
+      })
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || `HTTP error! status: ${response.status}`)
+      }
+      const updatedProducts = products.map(p => 
+        p.id === showEditPopup.id ? { ...p, title: newTitle, items: newItems.join('\n') } : p
+      )
+      setProducts(updatedProducts)
+      setShowEditPopup(null)
+    } catch (error) {
+      console.error('Failed to edit product:', error)
+      setEditError(error.message || '수정 중 오류가 발생했습니다.')
+    }
+    setEditPassword('')
   }
 
   const indexOfLastProduct = currentPage * productsPerPage
@@ -149,6 +201,32 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-orange-400 p-4 md:p-8">
+      <div 
+        className="fixed top-4 right-4 z-50"
+        onMouseEnter={() => setShowQR(true)}
+        onMouseLeave={() => setShowQR(false)}
+      >
+        <button
+          className="bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+          aria-label="피드백 QR 코드"
+        >
+          의견을 주세요!
+        </button>
+        {showQR && (
+          <div className="absolute top-full right-0 mt-2 bg-white p-4 rounded-lg shadow-xl">
+            <QRCodeSVG 
+              value="https://forms.gle/D7EfuSqKtMwD3dcz8" 
+              size={128}
+            />
+          </div>
+        )}
+      </div>
+      {fetchError && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+          <strong className="font-bold">Error!</strong>
+          <span className="block sm:inline"> {fetchError}</span>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {currentProducts.map(product => (
           <div key={product.id} className="bg-white rounded-lg shadow-lg p-4 relative">
@@ -171,6 +249,13 @@ export default function App() {
                 확인
               </button>
               <button 
+                onClick={() => handleEditAttempt(product)}
+                className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors"
+                aria-label="수정"
+              >
+                <Edit className="h-5 w-5" />
+              </button>
+              <button 
                 onClick={() => handleDeleteAttempt(product.id)}
                 className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors"
                 aria-label="삭제"
@@ -191,7 +276,7 @@ export default function App() {
                 type="text"
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="이름 (필수)"
+                placeholder="닉네임 (필수)"
                 className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
               />
@@ -206,7 +291,7 @@ export default function App() {
                         updatedItems[index] = e.target.value
                         setNewItems(updatedItems)
                       }}
-                      placeholder={index === 0 ? "오픈카톡링크 or 전화번호(문자로 거래할 때)(필수)" : "상품 정보"}
+                      placeholder={index === 0 ? "오픈카톡링크를 넣어주세요 (필수)" : "추가 상품 정보"}
                       className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required={index === 0}
                     />
@@ -347,6 +432,83 @@ export default function App() {
                 확인
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showEditPopup !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">상품 수정</h2>
+            <form onSubmit={(e) => { e.preventDefault(); handleEditConfirm(); }} className="space-y-4">
+              <input
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="상품명 (필수)"
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <div className="max-h-60 overflow-y-auto pr-2">
+                {newItems.map((item, index) => (
+                  <div key={index} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={item}
+                      onChange={(e) => {
+                        const updatedItems = [...newItems]
+                        updatedItems[index] = e.target.value
+                        setNewItems(updatedItems)
+                      }}
+                      placeholder={index === 0 ? "상품 정보 (필수)" : "추가 상품 정보"}
+                      className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required={index === 0}
+                    />
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(index)}
+                        className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors"
+                        aria-label={`항목 ${index + 1} 삭제`}
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={handleAddItem}
+                className="w-full bg-green-500 text-white py-2 rounded-md hover:bg-green-600 transition-colors"
+              >
+                항목 추가
+              </button>
+              <input
+                type="password"
+                value={editPassword}
+                onChange={(e) => setEditPassword(e.target.value)}
+                placeholder="비밀번호 (필수)"
+                className="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              {editError && <p className="text-red-500">{editError}</p>}
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditPopup(null)}
+                  className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                >
+                  수정
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
