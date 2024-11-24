@@ -1,5 +1,8 @@
 const cors = require('cors');
 const express = require('express');
+
+const app = express();
+
 const {
   getProducts,
   addProduct,
@@ -9,9 +12,8 @@ const {
   editProduct // Add this new function import
 } = require('./database');
 
-const app = express();
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
 // 상품 목록 조회
 app.get('/api/products', async (req, res) => {
