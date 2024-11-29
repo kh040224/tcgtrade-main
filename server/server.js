@@ -1,4 +1,8 @@
 const express = require('express');
+const cors = require('cors');
+const app = express();
+app.use(cors());
+app.use(express.json());
 const {
   getProducts,
   addProduct,
@@ -6,12 +10,6 @@ const {
   changeSoldStatus,
   getSoldStatus
 } = require('./database');
-
-const cors = require('cors');
-app.use(cors());
-
-const app = express();
-app.use(express.json());
 
 // 상품 목록 조회
 app.get('/api/products', async (req, res) => {
