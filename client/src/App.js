@@ -27,8 +27,9 @@ export default function App() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(SERVER_URL+'/api/products')
+      const response = await fetch('/api/products')
       const data = await response.json()
+      console.log(data);
       setProducts(data)
     } catch (error) {
       console.error('Failed to fetch products:', error)
@@ -37,7 +38,7 @@ export default function App() {
 
   const fetchSoldStatus = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/products/sold-status`)
+      const response = await fetch('/api/products/sold-status')
       const data = await response.json()
       setSoldItems(data)
     } catch (error) {
