@@ -27,7 +27,7 @@ export default function App() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/products')
+      const response = await fetch(`${SERVER_URL}/api/products`)
       const data = await response.json()
       console.log(data);
       setProducts(data)
@@ -38,7 +38,7 @@ export default function App() {
 
   const fetchSoldStatus = async () => {
     try {
-      const response = await fetch('/api/products/sold-status')
+      const response = await fetch(`${SERVER_URL}/api/products/sold-status`)
       const data = await response.json()
       setSoldItems(data)
     } catch (error) {
