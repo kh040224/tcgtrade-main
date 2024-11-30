@@ -1,11 +1,5 @@
 const express = require('express');
-const cors = require('cors');
 const app = express();
-const corsOptions = {
-  origin: 'http://tcgtrade.net',
-  methods: 'GET,POST,PUT,DELETE'
-};
-app.use(cors(corsOptions));
 app.use(express.json());
 const {
   getProducts,
