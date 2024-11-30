@@ -3,7 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react';
-const SERVER_URL = "http://server.tcgtrade.net"
+const SERVER_URL = window.location.protocol === 'https:' 
+  ? "https://server.tcgtrade.net"
+  : "http://server.tcgtrade.net";
 
 export default function App() {
   const [products, setProducts] = useState([])
