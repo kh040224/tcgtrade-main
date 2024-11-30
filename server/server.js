@@ -8,7 +8,8 @@ const {
   addProduct,
   deleteProduct,
   changeSoldStatus,
-  getSoldStatus
+  getSoldStatus,
+  updateProduct
 } = require('./database');
 
 // 상품 목록 조회
@@ -77,6 +78,25 @@ app.get('/api/products/sold-status', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+app.put('/api/products/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, items, password } = req.body;
+  try {
+    const result = await updateProduct(id, title, items, password);
+    res.json(result);
+  } catch (err) {
+    if (err.message === '상품을 찾을 수 없습니다.') {
+      res.status(404).json({ error: err.message });
+    } else if (err.message === '비밀번호가 일치하지 않습니다.') {
+      res.status(403).json({ error: err.message });
+    } else {
+      res.status(500).json({ error: err.message });
+    }
+  }
+});
+
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`서버가 포트 ${PORT}에서 실행 중입니다.`));

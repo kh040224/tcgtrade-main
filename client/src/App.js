@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Plus, ChevronLeft, ChevronRight, X, Trash2 } from 'lucide-react'
-const SERVER_URL = "https://server.tcgtrade.net"
+import { QRCodeSVG } from 'qrcode.react';
+const SERVER_URL = "https://tcgtrade.net"
 
 export default function App() {
   const [products, setProducts] = useState([])
@@ -19,6 +20,13 @@ export default function App() {
   const formRef = useRef(null)
   const [soldItems, setSoldItems] = useState({})
   const [showSoldPopup, setShowSoldPopup] = useState(null)
+  const [showEditPopup, setShowEditPopup] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editItems, setEditItems] = useState(['']);
+  const [editPassword, setEditPassword] = useState('');
+  const [editError, setEditError] = useState('');
+  const [showQRPopup, setShowQRPopup] = useState(false);
+  const [feedbackUrl, setFeedbackUrl] = useState('');
 
   useEffect(() => {
     fetchProducts()
@@ -141,6 +149,52 @@ export default function App() {
     }
     setDeletePassword('');
   }
+  const handleEditAttempt = (product) => {
+    setShowEditPopup(product.id);
+    setEditTitle(product.title);
+    setEditItems(product.items.split('\n'));
+    setEditPassword('');
+    setEditError('');
+  };
+
+  const handleEditConfirm = async () => {
+    try {
+      const response = await fetch(`${SERVER_URL}/api/products/${showEditPopup}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editTitle,
+          items: editItems.filter(item => item.trim() !== '').join('\n'),
+          password: editPassword
+        })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setProducts(prevProducts => 
+          prevProducts.map(p => 
+            p.id === showEditPopup 
+              ? { ...p, title: editTitle, items: editItems.filter(item => item.trim() !== '').join('\n') } 
+              : p
+          )
+        );
+        setShowEditPopup(null);
+        setEditError('');
+      } else {
+        setEditError(data.error || '수정 중 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to update product:', error);
+      setEditError('수정 중 오류가 발생했습니다.');
+    }
+    setEditPassword('');
+  };
+
+  const handleShowQRPopup = () => {
+    // 실제 피드백 URL로 대체해야 합니다.
+    setFeedbackUrl('https://forms.gle/iDTn8hsZAkn889yW6');
+    setShowQRPopup(true);
+  };
+
 
   const indexOfLastProduct = currentPage * productsPerPage
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage
@@ -163,25 +217,30 @@ export default function App() {
               {product.items.split('\n').length > 3 && (
                 <li className="text-gray-500">...그 외 {product.items.split('\n').length - 3}개</li>
               )}
-            </ul>
-            <div className="flex justify-between gap-2">
-              <button 
-                onClick={() => setShowItemsPopup(product.id)}
-                className="flex-1 bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
-              >
-                확인
-              </button>
-              <button 
-                onClick={() => handleDeleteAttempt(product.id)}
-                className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors"
-                aria-label="삭제"
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </div>
+          </ul>
+          <div className="flex justify-between gap-2">
+            <button 
+              onClick={() => setShowItemsPopup(product.id)}
+              className="flex-1 bg-gray-800 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors"
+            >
+              확인
+            </button>
+            <button
+              onClick={() => handleEditAttempt(product)}
+              className="bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors"
+            >
+              수정
+            </button>
+            <button 
+              onClick={() => handleDeleteAttempt(product.id)}
+              className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors"
+            >
+              <Trash2 className="h-5 w-5" />
+            </button>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
+    </div>
 
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -352,6 +411,76 @@ export default function App() {
         </div>
       )}
 
+      {showEditPopup !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">상품 수정</h2>
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              placeholder="상품명"
+              className="w-full p-2 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {editItems.map((item, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={item}
+                  onChange={(e) => {
+                    const updatedItems = [...editItems];
+                    updatedItems[index] = e.target.value;
+                    setEditItems(updatedItems);
+                  }}
+                  placeholder={index === 0 ? "오픈카톡링크 or 전화번호(문자로 거래할 때)(필수)" : "상품 정보"}
+                  className="flex-1 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required={index === 0}
+                />
+                {index > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setEditItems(editItems.filter((_, i) => i !== index))}
+                    className="bg-red-500 text-white p-2 rounded-md hover:bg-red-600 transition-colors"
+                  >
+                    삭제
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              onClick={() => setEditItems([...editItems, ''])}
+              className="w-full bg-green-500 text-white p-2 rounded-md hover:bg-green-600 transition-colors mb-4"
+            >
+              항목 추가
+            </button>
+            <input
+              type="password"
+              value={editPassword}
+              onChange={(e) => setEditPassword(e.target.value)}
+              placeholder="비밀번호"
+              className="w-full p-2 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            {editError && <p className="text-red-500 mb-4">{editError}</p>}
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowEditPopup(null)}
+                className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleEditConfirm}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              >
+                수정
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
       <div className="mt-8 flex justify-center items-center gap-2">
         <button
           onClick={() => paginate(currentPage - 1)}
@@ -389,6 +518,37 @@ export default function App() {
       >
         <Plus className="h-6 w-6" />
       </button>
-    </div>
+
+        {/* QR 코드 팝업 버튼 추가 */}
+      <button
+        onClick={handleShowQRPopup}
+        className="fixed bottom-8 left-8 bg-blue-500 text-white p-2 rounded-full shadow-lg hover:bg-blue-600 transition-colors"
+      >
+        QR 코드
+      </button>
+
+      {/* QR 코드 팝업 */}
+      {showQRPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">피드백 QR 코드</h2>
+              <button
+                onClick={() => setShowQRPopup(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="flex justify-center mb-4">
+              <QRCodeSVG value={feedbackUrl} size={200} />
+            </div>
+            <p className="text-center text-gray-600">
+              QR 코드를 스캔하여 피드백을 남겨주세요.
+            </p>
+          </div>
+        </div>
+      )}
+      </div>
   )
 }

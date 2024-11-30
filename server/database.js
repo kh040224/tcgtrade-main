@@ -109,10 +109,30 @@ function getSoldStatus() {
   });
 }
 
+function updateProduct(id, title, items, password) {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT password FROM products WHERE id = ?', [id], (err, row) => {
+      if (err) reject(err);
+      else if (!row) reject(new Error('상품을 찾을 수 없습니다.'));
+      else if (row.password !== password) reject(new Error('비밀번호가 일치하지 않습니다.'));
+      else {
+        db.run('UPDATE products SET title = ?, items = ? WHERE id = ?',
+          [title, items, id],
+          function(err) {
+            if (err) reject(err);
+            else resolve({ id, title, items });
+          }
+        );
+      }
+    });
+  });
+}
+
 module.exports = {
   getProducts,
   addProduct,
   deleteProduct,
   changeSoldStatus,
-  getSoldStatus
+  getSoldStatus,
+  updateProduct
 };
