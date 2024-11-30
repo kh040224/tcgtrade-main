@@ -35,7 +35,7 @@ export default function App() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/products`)
+      const response = await fetch(`http://server.tcgtrade.net/api/products`)
       const data = await response.json()
       console.log(data);
       setProducts(data)
@@ -46,7 +46,7 @@ export default function App() {
 
   const fetchSoldStatus = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/products/sold-status`)
+      const response = await fetch(`http://server.tcgtrade.net/api/products/sold-status`)
       const data = await response.json()
       setSoldItems(data)
     } catch (error) {
@@ -58,7 +58,7 @@ export default function App() {
     e.preventDefault()
     if (newTitle.trim() && newItems[0].trim() && newPassword.trim()) {
       try {
-        const response = await fetch(SERVER_URL+'/api/products', {
+        const response = await fetch('http://server.tcgtrade.net/api/products', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -104,7 +104,7 @@ export default function App() {
 
   const handleDeleteConfirm = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/products/${showDeletePopup}`, {
+      const response = await fetch(`http://server.tcgtrade.net/api/products/${showDeletePopup}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: deletePassword })
@@ -125,7 +125,7 @@ export default function App() {
 
   const handleSoldStatusChange = async (productId, itemIndex) => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/products/${productId}/sold`, {
+      const response = await fetch(`http://server.tcgtrade.net/api/products/${productId}/sold`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: deletePassword, itemIndex })
@@ -159,7 +159,7 @@ export default function App() {
 
   const handleEditConfirm = async () => {
     try {
-      const response = await fetch(`${SERVER_URL}/api/products/${showEditPopup}`, {
+      const response = await fetch(`http://server.tcgtrade.net/api/products/${showEditPopup}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
